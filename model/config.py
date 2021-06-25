@@ -4,6 +4,7 @@ DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
 DATASET         = 'warm-up-8k'
 DVERSION        = ':latest'
+SAVE_PATH       = './model'
 
 # MODEL CONFIG ===========================
 RUN_NAME        = 'demo'

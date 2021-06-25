@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 
 from model.config import *
 from data.dataset import AICoughDataset
+from utils.metric import binary_acc
 from model.model import Randomize
 
 def parse_args():
@@ -39,7 +40,33 @@ def train(model, device, trainloader, optimizer, loss_function):
         optimizer (function): optimizer function for update gradient descent
         loss_function (function): function for calucate model loss
     """
-    pass
+    model.train()
+
+    running_loss, total_count, total_acc = 0, 0, 0
+    for i, (input, target) in enumerate(trainloader):
+        # load data into cuda
+        input, target = input.to(device), target.to(device)
+
+        # forward
+        predict = model(input)
+        loss = loss_function(predict, target)
+
+        # metric
+        running_loss    += loss.item()
+        total_acc       += binary_acc(predict, target)
+        total_count     += predict.shape[0]
+
+        # zero gradient + back propagation + step
+        optimizer.zero_grad()
+
+        loss.backward()
+        optimizer.step()
+
+    total_loss = running_loss/len(trainloader)
+    accuracy   = total_acc/total_count
+
+    wandb.log({'Train loss': total_loss, 'Train accuracy': accuracy})
+    return total_loss, accuracy
 
 def eval(model, device, validloader, loss_function, best_acc):
     """
@@ -52,7 +79,34 @@ def eval(model, device, validloader, loss_function, best_acc):
         loss_function (function): function for calucate model loss
         best_acc (float): checkpoint for save current model
     """
-    pass
+    model.eval()
+    running_loss, total_count, total_acc = 0,0,0
+    with torch.no_grad():
+        for i, (input, target) in enumerate(validloader):
+            input, target = input.to(device), target.to(device)
+
+            # forward
+            predict = model(input)
+            loss    = loss_function(predict, target)
+
+            # metric
+            running_loss    += loss.item()
+            total_acc       += binary_acc(predict, target)
+            total_count     += predict.shape[0]
+
+        total_loss = running_loss/len(validloader)
+        accuracy   = total_acc/total_count
+
+        # export weight
+        if accuracy>best_acc:
+            try:
+                torch.onnx.export(model, input, SAVE_PATH+RUN_NAME+'.onnx')
+                torch.save(model.state_dict(), SAVE_PATH+RUN_NAME+'.pth')
+            except:
+                print('Can export weights')
+
+        wandb.log({'Valid loss': total_loss, 'Valid accuracy': accuracy})
+        return total_loss, accuracy
 
 if __name__ == '__main__':
     args = parse_args()
@@ -112,5 +166,9 @@ if __name__ == '__main__':
         print(f'{epoch}/epochs | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f}')
 
     # TODO: log weight into wandb
+    trained_weight = wandb.Artifact(RUN_NAME, type='weights')
+    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
+    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
+    wandb.log_artifact(trained_weight)
 
     
