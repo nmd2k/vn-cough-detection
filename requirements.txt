@@ -4,3 +4,7 @@ torchvision>=0.9.1
 
 # log =========
 wandb
+tqdm
+
+# submission ==
+pandas
