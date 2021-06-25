@@ -6,6 +6,8 @@ DATASET         = 'warm-up-8k'
 DVERSION        = ':latest'
 SAVE_PATH       = './model'
 
+VALID_RATE      = 0.2
+
 # MODEL CONFIG ===========================
 RUN_NAME        = 'demo'
 INPUT_SIZE      = 640

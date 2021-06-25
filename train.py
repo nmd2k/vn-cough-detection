@@ -5,6 +5,7 @@ import time
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
+from torch.utils.data.dataset import random_split
 
 from model.config import *
 from data.dataset import AICoughDataset
@@ -130,8 +131,10 @@ if __name__ == '__main__':
     artifact_dir = artifact.download(DATA_PATH)
 
     # load dataset
-    train_set = AICoughDataset(root_path=DATA_PATH, is_train=True)
-    valid_set = AICoughDataset(root_path=DATA_PATH, is_train=False)
+    train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
+
+    valid_size  = int(VALID_RATE*len(train_set))
+    train_set, valid_set = random_split(train_set, [1-valid_size, valid_size])
 
     trainloader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_worker)
     validloader = DataLoader(valid_set, batch_size=args.batch_size, num_workers=args.num_worker)
