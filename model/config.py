@@ -3,7 +3,7 @@ PROJECT         = 'Cough-covid19'
 DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
 DATASET         = 'warm-up-8k'
-DVERSION        = ':latest'
+DVERSION        = 'latest'
 SAVE_PATH       = './model'
 
 VALID_RATE      = 0.2
