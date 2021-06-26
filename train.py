@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
 
 from model.config import *
-from data.dataset import AICoughDataset
+from utils.dataset import AICoughDataset
 from utils.metric import binary_acc
 from model.model import Randomize
 
@@ -173,5 +173,3 @@ if __name__ == '__main__':
     trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
     trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
     wandb.log_artifact(trained_weight)
-
-    

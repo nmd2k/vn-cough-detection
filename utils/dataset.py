@@ -13,8 +13,8 @@ class AICoughDataset(Dataset):
     """
 
     def __init__(self, root_path, is_train=True, transform=None):
-        self.path   = root_path
-        self.train  = is_train
+        self.path      = root_path
+        self.train     = is_train
         self.transform = transform
 
         pass
