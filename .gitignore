@@ -2,3 +2,4 @@
 /data/test
 /wandb
 */__pycache__
+.vscode/*
