@@ -1,6 +1,9 @@
+import os
 import torch
 import random
 import torchaudio
+from tqdm import tqdm
+from unsilence import Unsilence
 import torchaudio.functional as F
 import torchaudio.transforms as T
 
@@ -79,3 +82,14 @@ class AudioUtil():
         mfcc = get_mfcc_func(signal)
         #print(mfcc.shape)
         return mfcc 
+
+def unsilence_dir(root_path):
+    filename = [x for x in os.listdir(root_path) if 'wav' in x]
+    dir_length = len(filename)
+
+    pbar = tqdm(range(dir_length))
+    for idx in pbar:
+        pbar.set_description(filename[idx])
+        read_file = Unsilence(os.path.join(root_path, filename[idx]))
+        read_file.detect_silence()
+        read_file.render_media(os.path.join(root_path, 'unsilenced', filename[idx]))
