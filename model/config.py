@@ -1,4 +1,4 @@
-PROJECT         = 'Cough-covid19'
+PROJECT         = 'cough-detection'
 # DATA CONFIG ============================
 DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
