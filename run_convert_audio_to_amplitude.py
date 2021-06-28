@@ -6,7 +6,7 @@ import os
 from multiprocessing import Pool
 
 def load_amplitude_from_file(filepath):
-    audio_id = os.path.split(filepath)[1]
+    audio_id = os.path.split(filepath)[1].split(".")[0]
     audio_tensor, sampling_rate = torchaudio.load(filepath)
 
     return audio_id, audio_tensor, sampling_rate

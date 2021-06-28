@@ -4,6 +4,9 @@
 /wandb
 */__pycache__
 /.vscode
-*/*.pth
-*/*.pt
-*/*.onx
+*.pth
+*.onnx
+*.pt
+*.onx
+*.csv
+*.zip

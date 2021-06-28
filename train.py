@@ -103,6 +103,7 @@ def eval(model, device, validloader, loss_function, best_acc):
         accuracy   = total_acc/total_count
 
         # export weight
+        print(f"Comparing accuracy. Acc: {accuracy} ; Best Acc: {best_acc}")
         if accuracy>best_acc:
             try:
                 torch.onnx.export(model, inputs, SAVE_PATH+RUN_NAME+'.onnx')
@@ -171,9 +172,6 @@ if __name__ == '__main__':
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    # import IPython
-    # IPython.embed()
-
     # start training
     run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
@@ -188,11 +186,13 @@ if __name__ == '__main__':
         print(f'{epoch}/epochs | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | t: {(t1-t0):.1f}s')
         
         test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
+        if test_acc > best_acc:
+            best_acc = test_acc
         # log eval experiment
-        print(f'{epoch}/epochs | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f}')
+        print(f'{epoch}/epochs | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f}')
 
     # # TODO: log weight into wandb
-    # trained_weight = wandb.Artifact(RUN_NAME, type='weights')
-    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
-    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
-    # wandb.log_artifact(trained_weight)
+    trained_weight = wandb.Artifact(RUN_NAME, type='weights')
+    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
+    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
+    wandb.log_artifact(trained_weight)
