@@ -37,16 +37,7 @@ if __name__ == '__main__':
     run = wandb.init(project=PROJECT, entity='uet-coughcovid')
     
     use_data_wandb(run, data_name='warm-up-8k', data_type='RAW DATASET', download=False)
-    log_data_wandb(run, data_name='unsilence-warm-up-8k', data_type='UNSILENCE DATASET')
 
-    # filename = os.listdir(os.path.join(DATA_PATH, 'train/train_audio_files_8k'))
+    
 
-    # lengh = len(filename)
-
-    # aud   = torchaudio.load(os.path.join(DATA_PATH, 'train/train_audio_files_8k', filename[0]))
-    # aud   = AudioUtil.pad_trunc(aud, max_ms = 10000)
-    # spec  = AudioUtil.get_spectrogram(aud, n_mels=64, n_fft=1024, hop_len=None)
-    # mfcc  = AudioUtil.get_mfcc(aud)
-
-    # unsilence demo
-    # unsilence_dir(os.path.join(DATA_PATH, 'demo'))
+    log_data_wandb(run, data_name="raw-amplitude-warm-up-8k", data_type="RAW DATASET")

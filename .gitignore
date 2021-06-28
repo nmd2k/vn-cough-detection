@@ -1,5 +1,9 @@
 /data/train
 /data/test
+/amplitude_data
 /wandb
 */__pycache__
 /.vscode
+*/*.pth
+*/*.pt
+*/*.onx

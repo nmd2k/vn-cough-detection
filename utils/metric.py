@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
 def binary_acc(y_pred, y_true):
-    round_y_pred    = torch.round(y_true)
-    total_true      = (round_y_pred == y_pred).sum().float()
+    round_y_pred    = torch.round(y_pred)
+    total_true      = (round_y_pred == y_true).sum().float()
 
     return total_true
 
