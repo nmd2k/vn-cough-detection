@@ -8,6 +8,15 @@ SAVE_PATH       = './model'
 
 VALID_RATE      = 0.2
 
+# PROCESSING MEL =========================
+SR              = 8000
+FRAME_LENGTH    = 8064
+N_FFT           = 1024
+N_MFCC          = 128
+HOP_LENGTH_FFT  = 512
+DURATION        = 8150
+N_MELS          = 128
+
 # MODEL CONFIG ===========================
 RUN_NAME        = 'demo'
 INPUT_SIZE      = 640

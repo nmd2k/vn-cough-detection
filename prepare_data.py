@@ -5,48 +5,25 @@ import time
 import torchaudio
 import numpy as np
 from model.config import *
-from utils.data_tools import AudioUtil, unsilence_dir
-
-def log_data_wandb(run, data_name=DATASET, data_type=None, root_path=DATA_PATH):
-    if data_type == None:
-        data_type = 'DATASET'
-
-    artifact = wandb.Artifact(data_name, data_type)
-
-    if os.path.isdir(root_path):
-        artifact.add_dir(root_path)
-    elif os.path.isfile(root_path):
-        artifact.add_file(root_path)
-
-    else:
-        print("Can not log data dir/file into wandb, please double check root_path")
-
-    run.log_artifact(artifact)
-
-def use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=True):
-    if data_type == None:
-        artifact = run.use_artifact(data_name+':'+data_ver)
-    else:
-        artifact = run.use_artifact(data_name+':'+data_ver, data_type)
-
-    if download:
-        artifact.download(root_path)
+from torchvision import transforms
+from utils.mlops_tools import *
+from utils.data_tools import AudioUtil, plot_spectrogram, unsilence_dir, mel_spectrogram_generator, mfcc_spectrogram_generator
 
 if __name__ == '__main__':
+    config = dict(
+        sample_rate  = SR,
+        n_fft        = N_FFT,
+        n_mfcc       = N_MFCC,
+        hop_length   = HOP_LENGTH_FFT,
+        n_mels       = N_MELS,
+        duration     = DURATION,)
+
     # init wandb run
-    run = wandb.init(project=PROJECT, entity='uet-coughcovid')
-    
-    use_data_wandb(run, data_name='warm-up-8k', data_type='RAW DATASET', download=False)
-    log_data_wandb(run, data_name='unsilence-warm-up-8k', data_type='UNSILENCE DATASET')
+    run = wandb.init(project=PROJECT, entity='uet-coughcovid', config=config)
 
-    # filename = os.listdir(os.path.join(DATA_PATH, 'train/train_audio_files_8k'))
+    use_data_wandb(run, data_name='unsilence-warm-up-8k', data_type='UNSILENCE DATASET', download=False)
 
-    # lengh = len(filename)
+    mfcc_spectrogram_generator(root_path=os.path.join(DATA_PATH, 'train'))
+    mfcc_spectrogram_generator(root_path=os.path.join(DATA_PATH, 'test'))
 
-    # aud   = torchaudio.load(os.path.join(DATA_PATH, 'train/train_audio_files_8k', filename[0]))
-    # aud   = AudioUtil.pad_trunc(aud, max_ms = 10000)
-    # spec  = AudioUtil.get_spectrogram(aud, n_mels=64, n_fft=1024, hop_len=None)
-    # mfcc  = AudioUtil.get_mfcc(aud)
-
-    # unsilence demo
-    # unsilence_dir(os.path.join(DATA_PATH, 'demo'))
+    log_data_wandb(run, data_name='mfcc-warm-up-8k', data_type='SPECTROGRAM DATASET')

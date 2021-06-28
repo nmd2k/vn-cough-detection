@@ -1,12 +1,28 @@
+from logging import root
 import os
 import torch
 import random
+import numpy as np
 import torchaudio
 from tqdm import tqdm
+from model.config import *
 from unsilence import Unsilence
 import torchaudio.functional as F
 import torchaudio.transforms as T
 
+def plot_spectrogram(spec, title=None, ylabel='freq_bin', aspect='auto', xmax=None):
+    import matplotlib.pyplot as plt
+    import librosa
+    fig, axs = plt.subplots(1, 1)
+    axs.set_title(title or 'Spectrogram (db)')
+    axs.set_ylabel(ylabel)
+    axs.set_xlabel('frame')
+    im = axs.imshow(librosa.power_to_db(spec), origin='lower', aspect=aspect)
+    if xmax:
+        axs.set_xlim((0, xmax))
+    fig.colorbar(im, ax=axs)
+    plt.show()
+    
 class AudioUtil():
     def rechannel(aud, new_channel):
         """
@@ -69,9 +85,9 @@ class AudioUtil():
         return (signal, sr)
 
     def get_spectrogram(aud, n_mels=64, n_fft=1024, hop_len=None):
-        signal,sr = aud
+        signal, sr = aud
         # spec has shape [channel, n_mels, time], where channel is mono, stereo etc
-        get_spec =  T.MelSpectrogram(sr, n_fft=n_fft, hop_length=hop_len, n_mels=n_mels)
+        get_spec =  T.MelSpectrogram(sample_rate=sr, n_fft=n_fft, hop_length=hop_len, n_mels=n_mels)
         spec = get_spec(signal)
         #print(spec.shape)
         return spec
@@ -93,3 +109,68 @@ def unsilence_dir(root_path):
         read_file = Unsilence(os.path.join(root_path, filename[idx]))
         read_file.detect_silence()
         read_file.render_media(os.path.join(root_path, 'unsilenced', filename[idx]))
+
+def mel_spectrogram_generator(sample_rate=SR, 
+                                n_fft=N_FFT, 
+                                win_length=None, 
+                                hop_length=HOP_LENGTH_FFT, 
+                                n_mels=N_MELS,
+                                root_path=DATA_PATH):
+    
+    filename = os.listdir(os.path.join(root_path, 'audio'))
+    pbar = tqdm(range(len(filename)))
+
+    mel_spectrogram = T.MelSpectrogram(
+        sample_rate=sample_rate,
+        n_fft=n_fft,
+        win_length=win_length,
+        hop_length=hop_length,
+        center=True,
+        pad_mode='reflect',
+        power=2.0,
+        onesided=True,
+        n_mels=n_mels,
+    )
+
+    for idx in pbar:
+        pbar.set_description(filename[idx], refresh=False)
+        aud   = torchaudio.load(os.path.join(root_path, 'audio', filename[idx]))
+        aud   = AudioUtil.pad_trunc(aud, max_ms = DURATION)
+
+        spec  = mel_spectrogram(aud[0]).squeeze()
+
+        if not os.path.exists(os.path.join(root_path, 'mel_spectrogram')):
+            os.mkdir(os.path.join(root_path, 'mel_spectrogram'))
+        
+        torch.save(spec, os.path.join(root_path, 'mel_spectrogram', filename[idx][:-3]+'pt'))
+
+def mfcc_spectrogram_generator(sample_rate=SR, 
+                                n_mfcc=N_MFCC,
+                                n_fft=N_FFT, 
+                                hop_length=HOP_LENGTH_FFT, 
+                                n_mels=N_MELS,
+                                root_path=DATA_PATH):
+    
+    filename = os.listdir(os.path.join(root_path, 'audio'))
+    pbar = tqdm(range(len(filename)))
+
+    mfcc_transform = T.MFCC(
+        sample_rate=sample_rate,
+        n_mfcc=n_mfcc,
+        melkwargs={
+        'n_fft': n_fft,
+        'n_mels': n_mels,
+        'hop_length': hop_length,}
+    )
+
+    for idx in pbar:
+        pbar.set_description(filename[idx], refresh=False)
+        aud   = torchaudio.load(os.path.join(root_path, 'audio', filename[idx]))
+        aud   = AudioUtil.pad_trunc(aud, max_ms = DURATION)
+
+        spec  = mfcc_transform(aud[0]).squeeze()
+
+        if not os.path.exists(os.path.join(root_path, 'mfcc_spectrogram')):
+            os.mkdir(os.path.join(root_path, 'mfcc_spectrogram'))
+        
+        torch.save(spec, os.path.join(root_path, 'mfcc_spectrogram', filename[idx][:-3]+'pt'))
