@@ -20,39 +20,32 @@ class AICoughDataset(Dataset):
     def __init__(self, root_path, is_train=True, transform=None):
         self.path      = root_path
         self.train     = is_train
+        
         if transform == None:
             self.transform = transforms.ToTensor()
         else:
             self.transform = transform
 
-        if is_train:
-            csv = pd.read_csv(os.path.join(root_path, 'train', '*.csv'))
-        else:
-            csv = pd.read_csv(os.path.join(root_path, 'test', '*.csv'))
+        # Read csv and random shuffle rows
+        df = pd.read_csv(os.path.join(root_path, 'train', 'metadata_train_challenge.csv')).sample(frac=1) 
 
-        self.ids       = csv['uuid']
-        self.target    = csv['assessment_result']
-    
+        # Get train and test set from the data
+        split_pos = int(len(df)) * 0.8
+        train_csv = df.iloc[:split_pos,:]
+        test_csv = df.iloc[split_pos:,:]
+
+        self.ids       = train_csv['uuid']
+        self.target    = train_csv['assessment_result']
+
+
     def __len__(self):
         return len(self.ids)
 
     def __getitem__(self, index):
-        id = self.ids[index]
-
-        if not self.train:
-            # testset return id and input
-            img = Image.open(os.path.join(self.path, 'test', id + '.jpg'))
-            img = self.transform(img)
-            return id, img
-        
-        # trainset return input and target
-        img    = Image.open(os.path.join(self.path, 'train', id + '.jpg'))
+        audio_id = self.ids[index]
         target = float(self.target[id])
-
-        img    = self.transform(img)
-        target = self.transform(target)
-
-        return img, target
+        
+        return audio_id, target
         
 class FixedLenDataset(Dataset):
     def __init__(self, root_path, mfcc=True, is_train=True, transform=None):

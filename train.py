@@ -124,52 +124,54 @@ if __name__ == '__main__':
         epoch       = args.epoch,
     )
 
-    run = wandb.init(project=PROJECT, config=config)
+    run = wandb.init(project=PROJECT, config=config, entity="uet-coughcovid")
 
+    print("Artifact name", args.dataset+DVERSION)
     # select dataset version + download it if need
-    artifact     = run.use_artifact(args.dataset+DVERSION, type='RAW DATASET')
-    artifact_dir = artifact.download(DATA_PATH)
+    artifact     = run.use_artifact("warm-up-8k:latest")
+    # artifact     = run.use_artifact(args.dataset+DVERSION, type='RAW DATASET')
+    # artifact_dir = artifact.download(DATA_PATH)
 
-    # load dataset
-    train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
+    # # load dataset
+    # train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
 
-    valid_size  = int(VALID_RATE*len(train_set))
-    train_set, valid_set = random_split(train_set, [1-valid_size, valid_size])
+    # valid_size  = int(VALID_RATE*len(train_set))
+    # train_set, valid_set = random_split(train_set, [1-valid_size, valid_size])
 
-    trainloader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_worker)
-    validloader = DataLoader(valid_set, batch_size=args.batch_size, num_workers=args.num_worker)
+    # trainloader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_worker)
+    # validloader = DataLoader(valid_set, batch_size=args.batch_size, num_workers=args.num_worker)
 
-    # set device to train on
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
+    # # set device to train on
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
-    # define model + optimizer + criterion
-    # TODO: replace dummy model, criterion, optimizer
-    model = Randomize().to(device)
+    # # define model + optimizer + criterion
+    # # TODO: replace dummy model, criterion, optimizer
+    # model = Randomize().to(device)
 
-    criterion = nn.BCELoss()
+    # criterion = nn.BCELoss()
 
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    # start training
-    run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
+    # # start training
+    # run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
-    best_acc = 0 # if valid acc bigger than best_acc then save version
-    epochs = args.epoch
+    # best_acc = 0 # if valid acc bigger than best_acc then save version
+    # epochs = args.epoch
     
-    for epoch in range(epochs):
-        t0 = time.time()
-        train_loss, train_acc = train(model, device, trainloader, optimizer, criterion)
-        t1 = time.time()
-        # log train experiment
-        print(f'{epoch}/epochs | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | t: {(t1-t0):.1f}s')
+    # for epoch in range(epochs):
+    #     t0 = time.time()
+    #     train_loss, train_acc = train(model, device, trainloader, optimizer, criterion)
+    #     t1 = time.time()
+    #     # log train experiment
+    #     print(f'{epoch}/epochs | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | t: {(t1-t0):.1f}s')
         
-        test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
-        # log eval experiment
-        print(f'{epoch}/epochs | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f}')
+    #     test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
+    #     # log eval experiment
+    #     print(f'{epoch}/epochs | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f}')
 
-    # TODO: log weight into wandb
-    trained_weight = wandb.Artifact(RUN_NAME, type='weights')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
-    wandb.log_artifact(trained_weight)
+    # # TODO: log weight into wandb
+    # trained_weight = wandb.Artifact(RUN_NAME, type='weights')
+    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
+    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
+    # wandb.log_artifact(trained_weight)
