@@ -9,6 +9,7 @@ from torch.utils.data.dataset import random_split
 
 from model.config import *
 from utils.dataset import AICoughDataset
+from utils.mlops_tools import use_data_wandb
 from utils.metric import binary_acc
 from model.model import Randomize
 
@@ -124,13 +125,13 @@ if __name__ == '__main__':
         epoch       = args.epoch,
     )
 
-    run = wandb.init(project=PROJECT, config=config)
+    run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
 
     # select dataset version + download it if need
-    artifact     = run.use_artifact(args.dataset+DVERSION, type='RAW DATASET')
-    artifact_dir = artifact.download(DATA_PATH)
+    use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
+    # TODO: custom dataset
     train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
 
     valid_size  = int(VALID_RATE*len(train_set))
@@ -144,7 +145,6 @@ if __name__ == '__main__':
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # define model + optimizer + criterion
-    # TODO: replace dummy model, criterion, optimizer
     model = Randomize().to(device)
 
     criterion = nn.BCELoss()

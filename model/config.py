@@ -2,7 +2,7 @@ PROJECT         = 'cough-detection'
 # DATA CONFIG ============================
 DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
-DATASET         = 'warm-up-8k'
+DATASET         = 'unsilence-warm-up-8k'
 DVERSION        = 'latest'
 SAVE_PATH       = './model'
 
