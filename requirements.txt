@@ -4,6 +4,7 @@ torchvision>=0.9.1
 
 # data tool ===
 torchaudio
+unsilence
 
 # metric
 sklearn
