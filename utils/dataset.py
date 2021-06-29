@@ -26,12 +26,12 @@ class AICoughDataset(Dataset):
             self.transform = transform
 
         if is_train:
-            csv = pd.read_csv(os.path.join(root_path, 'train', '*.csv'))
+            csv = pd.read_csv(os.path.join(root_path, 'train', 'metadata.csv'))
+            self.target    = csv['assessment_result']
         else:
-            csv = pd.read_csv(os.path.join(root_path, 'test', '*.csv'))
+            csv = pd.read_csv(os.path.join(root_path, 'test', 'metadata.csv'))
 
         self.ids       = csv['uuid']
-        self.target    = csv['assessment_result']
     
     def __len__(self):
         return len(self.ids)
@@ -41,16 +41,15 @@ class AICoughDataset(Dataset):
 
         if not self.train:
             # testset return id and input
-            img = Image.open(os.path.join(self.path, 'test', id + '.jpg'))
-            img = self.transform(img)
+            img = torch.load(os.path.join(self.path, 'test/mfcc_spectrogram', id + '.pt'))
             return id, img
         
         # trainset return input and target
-        img    = Image.open(os.path.join(self.path, 'train', id + '.jpg'))
-        target = float(self.target[id])
+        img    = torch.load(os.path.join(self.path, 'train/mfcc_spectrogram', id + '.pt'))
+        target = float(self.target[index])
 
-        img    = self.transform(img)
-        target = self.transform(target)
+        # img    = self.transform(img)
+        # target = self.transform(target)
 
         return img, target
         

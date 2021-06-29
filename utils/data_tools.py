@@ -1,14 +1,54 @@
-from logging import root
 import os
 import torch
 import random
 import numpy as np
 import torchaudio
 from tqdm import tqdm
+import pandas as pd
 from model.config import *
 from unsilence import Unsilence
 import torchaudio.functional as F
 import torchaudio.transforms as T
+
+def validate_submission(sample_file, submission_file):
+    """
+    Function to validate submission file
+    Args:
+        sample_file (string): Path to submission file
+        submission_file (string): Path to sample submission file
+    """
+    df_sample = pd.read_csv(sample_file)
+    df_submission = pd.read_csv(submission_file)
+
+    if len(df_sample["uuid"]) != len(df_submission["uuid"]):
+        print("Invalid size")
+        return
+
+    submission_ids = {}
+
+    for idx, uuid in enumerate(df_submission["uuid"]):
+        submission_ids[uuid] = df_submission["assessment_result"][idx]
+    
+    for idx, uuid in enumerate(df_sample["uuid"]):
+        if not uuid in submission_ids:
+            print("Invalid uuid", uuid)
+            return
+
+    print("All ids are valid. Aligning to sample file")
+
+    data = {
+        "uuid": [],
+        "assessment_result": []
+    }
+
+    for idx, uuid in enumerate(df_sample["uuid"]):
+        data["uuid"].append(uuid)
+        data["assessment_result"].append(submission_ids[uuid])
+
+    df = pd.DataFrame.from_dict(data)
+    df.to_csv('results.csv', index=False)
+
+    print("Done. Result saved")
 
 def plot_spectrogram(spec, title=None, ylabel='freq_bin', aspect='auto', xmax=None):
     import matplotlib.pyplot as plt

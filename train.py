@@ -1,3 +1,4 @@
+import os
 import wandb
 import torch
 import argparse
@@ -47,10 +48,10 @@ def train(model, device, trainloader, optimizer, loss_function):
     running_loss, total_count, total_acc = 0, 0, 0
     for i, (input, target) in enumerate(trainloader):
         # load data into cuda
-        input, target = input.to(device), target.to(device)
+        input, target = input.to(device), target.to(device, torch.float)
 
         # forward
-        predict = model(input)
+        predict = model(input).to(device)
         loss = loss_function(predict, target)
 
         # metric
@@ -59,15 +60,15 @@ def train(model, device, trainloader, optimizer, loss_function):
         total_count     += predict.shape[0]
 
         # zero gradient + back propagation + step
-        optimizer.zero_grad()
+        # optimizer.zero_grad()
 
-        loss.backward()
-        optimizer.step()
+        # loss.backward()
+        # optimizer.step()
 
     total_loss = running_loss/len(trainloader)
     accuracy   = total_acc/total_count
 
-    wandb.log({'Train loss': total_loss, 'Train accuracy': accuracy})
+    # wandb.log({'Train': {'loss': total_loss, 'accuracy': accuracy}})
     return total_loss, accuracy
 
 def eval(model, device, validloader, loss_function, best_acc):
@@ -85,10 +86,10 @@ def eval(model, device, validloader, loss_function, best_acc):
     running_loss, total_count, total_acc = 0,0,0
     with torch.no_grad():
         for i, (input, target) in enumerate(validloader):
-            input, target = input.to(device), target.to(device)
+            input, target = input.to(device), target.to(device, dtype=torch.float)
 
             # forward
-            predict = model(input)
+            predict = model(input).to(device)
             loss    = loss_function(predict, target)
 
             # metric
@@ -102,12 +103,12 @@ def eval(model, device, validloader, loss_function, best_acc):
         # export weight
         if accuracy>best_acc:
             try:
-                torch.onnx.export(model, input, SAVE_PATH+RUN_NAME+'.onnx')
-                torch.save(model.state_dict(), SAVE_PATH+RUN_NAME+'.pth')
+                torch.onnx.export(model, input, os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
+                torch.save(model.state_dict(), os.path.join(SAVE_PATH,RUN_NAME+'.pth'))
             except:
                 print('Can export weights')
 
-        wandb.log({'Valid loss': total_loss, 'Valid accuracy': accuracy})
+        # wandb.log({'Valid':{'loss': total_loss, 'accuracy': accuracy}})
         return total_loss, accuracy
 
 if __name__ == '__main__':
@@ -125,17 +126,16 @@ if __name__ == '__main__':
         epoch       = args.epoch,
     )
 
-    run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
+    # run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
 
     # select dataset version + download it if need
-    use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
+    # use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
-    # TODO: custom dataset
     train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
 
     valid_size  = int(VALID_RATE*len(train_set))
-    train_set, valid_set = random_split(train_set, [1-valid_size, valid_size])
+    train_set, valid_set = random_split(train_set, [len(train_set)-valid_size, valid_size])
 
     trainloader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_worker)
     validloader = DataLoader(valid_set, batch_size=args.batch_size, num_workers=args.num_worker)
@@ -149,10 +149,11 @@ if __name__ == '__main__':
 
     criterion = nn.BCELoss()
 
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = None
+    # optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    # start training
-    run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
+    # # start training
+    # run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
     best_acc = 0 # if valid acc bigger than best_acc then save version
     epochs = args.epoch
@@ -162,14 +163,16 @@ if __name__ == '__main__':
         train_loss, train_acc = train(model, device, trainloader, optimizer, criterion)
         t1 = time.time()
         # log train experiment
-        print(f'{epoch}/epochs | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | t: {(t1-t0):.1f}s')
+        print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | {(t1-t0):.1f}s')
         
+        t0 = time.time()
         test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
+        t1 = time.time()
         # log eval experiment
-        print(f'{epoch}/epochs | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f}')
+        print(f'{epoch+1}/{epochs} | Valid loss: {train_loss:.3f} | Valid accuracy: {train_acc:.3f} | {(t1-t0):.1f}s')
 
     # TODO: log weight into wandb
-    trained_weight = wandb.Artifact(RUN_NAME, type='weights')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
-    wandb.log_artifact(trained_weight)
+    # trained_weight = wandb.Artifact(RUN_NAME, type='weights')
+    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
+    # trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
+    # wandb.log_artifact(trained_weight)
