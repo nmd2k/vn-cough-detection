@@ -66,9 +66,6 @@ def train(model, device, trainloader, optimizer, loss_function):
         total_acc       += binary_acc(predict, target)
         total_count     += predict.shape[0]
 
-        from IPython import embed
-        embed()
-
     total_loss = running_loss/len(trainloader)
     accuracy   = total_acc/total_count
 
