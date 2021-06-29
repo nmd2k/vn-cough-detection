@@ -41,11 +41,11 @@ class AICoughDataset(Dataset):
 
         if not self.train:
             # testset return id and input
-            img = torch.load(os.path.join(self.path, 'test/mfcc_spectrogram', id + '.pt'))
+            img = torch.load(os.path.join(self.path, 'test/spectrogram', id + '.pt'))
             return id, img
         
         # trainset return input and target
-        img    = torch.load(os.path.join(self.path, 'train/mfcc_spectrogram', id + '.pt'))
+        img    = torch.load(os.path.join(self.path, 'train/spectrogram', id + '.pt'))
         target = float(self.target[index])
 
         # img    = self.transform(img)

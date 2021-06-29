@@ -48,13 +48,13 @@ def train(model, device, trainloader, optimizer, loss_function):
     running_loss, total_count, total_acc = 0, 0, 0
     for i, (input, target) in enumerate(trainloader):
         # load data into cuda
-        input, target = input.to(device), target.to(device, torch.float)
+        input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
 
         # zero gradient
         optimizer.zero_grad()
 
         # forward
-        predict = model(input).squeeze()
+        predict = model(input)
         loss = loss_function(predict, target)
     
         # back propagation + step
@@ -69,7 +69,6 @@ def train(model, device, trainloader, optimizer, loss_function):
     total_loss = running_loss/len(trainloader)
     accuracy   = total_acc/total_count
 
-    # wandb.log({'Train': {'loss': total_loss, 'accuracy': accuracy}})
     return total_loss, accuracy
 
 def eval(model, device, validloader, loss_function, best_acc):
@@ -87,10 +86,10 @@ def eval(model, device, validloader, loss_function, best_acc):
     running_loss, total_count, total_acc = 0,0,0
     with torch.no_grad():
         for i, (input, target) in enumerate(validloader):
-            input, target = input.to(device), target.to(device, dtype=torch.float)
+            input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
 
             # forward
-            predict = model(input).squeeze()
+            predict = model(input)
             loss    = loss_function(predict, target)
 
             # metric
@@ -109,7 +108,6 @@ def eval(model, device, validloader, loss_function, best_acc):
             except:
                 print('Can export weights')
 
-        # wandb.log({'Valid':{'loss': total_loss, 'accuracy': accuracy}})
         return total_loss, accuracy
 
 if __name__ == '__main__':
@@ -127,10 +125,10 @@ if __name__ == '__main__':
         epoch       = args.epoch,
     )
 
-    # run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
+    run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
 
     # select dataset version + download it if need
-    # use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
+    use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
     train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
@@ -164,12 +162,14 @@ if __name__ == '__main__':
         train_loss, train_acc = train(model, device, trainloader, optimizer, criterion)
         t1 = time.time()
         # log train experiment
+        wandb.log({'Train loss': train_loss, 'Train accuracy': train_acc}, step=epoch)
         print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | {(t1-t0):.1f}s')
         
         t0 = time.time()
         test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
         t1 = time.time()
         # log eval experiment
+        wandb.log({'Valid loss': test_loss, 'Valid accuracy': test_acc}, step=epoch)
         print(f'{epoch+1}/{epochs} | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f} | {(t1-t0):.1f}s')
 
     trained_weight = wandb.Artifact(RUN_NAME, type='weights')

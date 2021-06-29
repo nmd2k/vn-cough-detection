@@ -2,7 +2,7 @@ PROJECT         = 'cough-detection'
 # DATA CONFIG ============================
 DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
-DATASET         = 'mfcc-warm-up-8k'
+DATASET         = 'mel-warm-up-8k'
 DVERSION        = 'latest'
 SAVE_PATH       = './model'
 
@@ -23,8 +23,8 @@ INPUT_SIZE      = 640
 BATCH_SIZE      = 16
 NUM_WORKER      = 0
 
-EPOCH           = 5
-LR              = 1e-3
+EPOCH           = 20
+LR              = 5e-4
 
 # PREDICTION CONFIG ======================
 DATA_PRED_PATH  = './data/test'
