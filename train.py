@@ -127,10 +127,10 @@ if __name__ == '__main__':
         epoch       = args.epoch,
     )
 
-    run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
+    # run = wandb.init(project=PROJECT, config=config, entity='uet-coughcovid')
 
     # select dataset version + download it if need
-    use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
+    # use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
     train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
 
     # start training
-    run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
+    # run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
     best_acc = 0 # if valid acc bigger than best_acc then save version
     epochs = args.epoch
@@ -173,6 +173,6 @@ if __name__ == '__main__':
         print(f'{epoch+1}/{epochs} | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f} | {(t1-t0):.1f}s')
 
     trained_weight = wandb.Artifact(RUN_NAME, type='weights')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.onnx')
-    trained_weight.add_file(SAVE_PATH+RUN_NAME+'.pth')
+    # trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
+    trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.pth'))
     wandb.log_artifact(trained_weight)

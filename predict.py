@@ -35,8 +35,8 @@ if __name__ == '__main__':
         input = input.to(device).unsqueeze(0)
         pred = model(input)
 
-        pred = pred.detach().cpu().numpy()
-        prediction[idx] = (id, pred[0])
+        pred = pred.squeeze().detach().cpu().numpy()
+        prediction[idx] = (id, pred)
 
     # save results
     df = DataFrame.from_dict(prediction, orient='index', columns=['uuid', 'assessment_result'])
