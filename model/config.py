@@ -2,7 +2,7 @@ PROJECT         = 'cough-detection'
 # DATA CONFIG ============================
 DATA_PATH       = './data'
 DATA_SAVE_PATH  = './data/preprocessed'
-DATASET         = 'unsilence-warm-up-8k'
+DATASET         = 'mfcc-warm-up-8k'
 DVERSION        = 'latest'
 SAVE_PATH       = './model'
 
@@ -18,9 +18,9 @@ DURATION        = 8150
 N_MELS          = 128
 
 # MODEL CONFIG ===========================
-RUN_NAME        = 'demo'
+RUN_NAME        = 'cnn'
 INPUT_SIZE      = 640
-BATCH_SIZE      = 32
+BATCH_SIZE      = 16
 NUM_WORKER      = 0
 
 EPOCH           = 5

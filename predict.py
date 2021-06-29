@@ -4,7 +4,7 @@ from tqdm import tqdm
 from pandas import DataFrame
 from torch.utils.data import DataLoader
 
-from model.model import Randomize
+from model.model import Randomize, SimpleCNN
 from utils.dataset import AICoughDataset
 from utils.data_tools import validate_submission
 from model.config import DATA_PATH, RUN_NAME, SAVE_PATH
@@ -15,7 +15,7 @@ if __name__ == '__main__':
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # call model + load pretrained weight
-    model = Randomize().to(device)
+    model = SimpleCNN().to(device)
     model.load_state_dict(torch.load(os.path.join(SAVE_PATH,RUN_NAME+'.pth')))
     
     # set layers such as dropout and batchnorm in evaluation mode

@@ -21,9 +21,9 @@ if __name__ == '__main__':
     # init wandb run
     run = wandb.init(project=PROJECT, entity='uet-coughcovid', config=config)
 
-    use_data_wandb(run, data_name='unsilence-warm-up-8k', data_type='UNSILENCE DATASET', download=False)
+    use_data_wandb(run, data_name='private-warm-up-8k', data_type='RAW DATASET', download=False)
 
     mfcc_spectrogram_generator(root_path=os.path.join(DATA_PATH, 'train'))
     mfcc_spectrogram_generator(root_path=os.path.join(DATA_PATH, 'test'))
 
-    log_data_wandb(run, data_name='mfcc-warm-up-8k', data_type='SPECTROGRAM DATASET')
+    log_data_wandb(run, data_name='mfcc-private-8k', data_type='SPECTROGRAM DATASET')

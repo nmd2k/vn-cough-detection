@@ -148,7 +148,14 @@ def unsilence_dir(root_path):
         pbar.set_description(filename[idx])
         read_file = Unsilence(os.path.join(root_path, filename[idx]))
         read_file.detect_silence()
-        read_file.render_media(os.path.join(root_path, 'unsilenced', filename[idx]))
+        if not os.path.exists(os.path.join(root_path, 'audio')):
+            os.mkdir(os.path.join(root_path, 'audio'))
+        try:
+            read_file.render_media(os.path.join(root_path, 'audio', filename[idx]))
+        except Exception as e: 
+            print(filename[idx], e)
+            from shutil import copyfile
+            copyfile(os.path.join(root_path, filename[idx]), os.path.join(root_path, 'audio', filename[idx]))
 
 def mel_spectrogram_generator(sample_rate=SR, 
                                 n_fft=N_FFT, 
@@ -177,7 +184,7 @@ def mel_spectrogram_generator(sample_rate=SR,
         aud   = torchaudio.load(os.path.join(root_path, 'audio', filename[idx]))
         aud   = AudioUtil.pad_trunc(aud, max_ms = DURATION)
 
-        spec  = mel_spectrogram(aud[0]).squeeze()
+        spec  = mel_spectrogram(aud[0])
 
         if not os.path.exists(os.path.join(root_path, 'mel_spectrogram')):
             os.mkdir(os.path.join(root_path, 'mel_spectrogram'))
@@ -208,7 +215,7 @@ def mfcc_spectrogram_generator(sample_rate=SR,
         aud   = torchaudio.load(os.path.join(root_path, 'audio', filename[idx]))
         aud   = AudioUtil.pad_trunc(aud, max_ms = DURATION)
 
-        spec  = mfcc_transform(aud[0]).squeeze()
+        spec  = mfcc_transform(aud[0])
 
         if not os.path.exists(os.path.join(root_path, 'mfcc_spectrogram')):
             os.mkdir(os.path.join(root_path, 'mfcc_spectrogram'))
