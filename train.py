@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
 
 from model.config import *
-from utils.dataset import AICoughDataset
+from utils.dataset import AICoughDataset, Mel_Mfcc_Dataset
 from utils.mlops_tools import create_exp_dir, use_data_wandb
 from utils.metric import binary_acc
 from model.common import weights_init
@@ -48,15 +48,15 @@ def train(model, device, trainloader, optimizer, loss_function):
     model.train()
 
     running_loss, total_count, total_acc = 0, 0, 0
-    for i, (input, target) in enumerate(trainloader):
+    for i, (mel, mfcc, target) in enumerate(trainloader):
         # load data into cuda
-        input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+        mel, mfcc, target = mel.to(device), mfcc.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
 
         # zero gradient
         optimizer.zero_grad()
 
         # forward
-        predict = model(input)
+        predict = model(mel, mfcc)
         loss = loss_function(predict, target)
     
         # back propagation + step
@@ -87,11 +87,11 @@ def eval(model, device, validloader, loss_function, best_acc):
     model.eval()
     running_loss, total_count, total_acc = 0,0,0
     with torch.no_grad():
-        for i, (input, target) in enumerate(validloader):
-            input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+        for i, (mel, mfcc, target) in enumerate(validloader):
+            mel, mfcc, target = mel.to(device), mfcc.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
 
             # forward
-            predict = model(input)
+            predict = model(mel, mfcc)
             loss    = loss_function(predict, target)
 
             # metric
@@ -128,7 +128,8 @@ if __name__ == '__main__':
     use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
-    train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
+    # train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
+    train_set   = Mel_Mfcc_Dataset(root_path=DATA_PATH, is_train=True)
 
     valid_size  = int(VALID_RATE*len(train_set))
     train_set, valid_set = random_split(train_set, [len(train_set)-valid_size, valid_size])

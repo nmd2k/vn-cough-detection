@@ -16,6 +16,42 @@ class Randomize(Module):
         output = torch.rand(input.shape[0], dtype=torch.float)
         return output
 
+class TwoResnetWay(Module):
+    def __init__(self, pretrain=False):
+        super(TwoResnetWay, self).__init__()
+        res1        = models.resnet34(pretrained=pretrain)
+        self.res1   = nn.Sequential(*(list(res1.children())[:-1]))
+        res2        = models.resnet34(pretrained=pretrain)
+        self.res2   = nn.Sequential(*(list(res2.children())[:-1]))
+
+        if pretrain:
+            for param in self.res1.parameters():
+                param.requires_grad = False 
+            for param in self.res2.parameters():
+                param.requires_grad = False 
+
+        self.res1.avgpool = nn.Sequential(
+                            nn.BatchNorm2d(num_features=512),
+                            nn.AdaptiveAvgPool2d((1,1)),)
+
+        self.res2.avgpool = nn.Sequential(
+                            nn.BatchNorm2d(num_features=512),
+                            nn.AdaptiveAvgPool2d((1,1)),)
+
+        self.fc1    = nn.Linear(in_features=1024, out_features=256)
+        self.fc2    = nn.Linear(in_features=256, out_features=1)
+
+    def forward(self, mel, mfcc):
+        out_mel  = self.res1(mel)
+        out_mfcc = self.res2(mfcc)
+        out      = torch.cat((out_mel, out_mfcc), dim=1)
+
+        out      = out.view(-1, 1024)
+        out      = F.relu(self.fc1(out))
+        out      = self.fc2(out)
+        
+        return torch.sigmoid(out)
+
 class SimpleCNN(Module):
     def __init__(self): 
         super(SimpleCNN, self).__init__()
@@ -68,12 +104,14 @@ def initialize_model(model_name, weight=None):
             for param in model_ft.parameters():
                 param.requires_grad = False 
 
-        model_ft.fc = nn.Sequential(
-                        nn.Linear(512, 128),
-                        nn.ReLU(),
-                        nn.Dropout(0.3),
-                        nn.Linear(128, 1),
-                        nn.Sigmoid())
+        model_ft.avgpool = nn.Sequential(
+                            nn.BatchNorm2d(num_features=512),
+                            nn.AdaptiveAvgPool2d((1,1)),
+                            )
+
+        model_ft.fc      = nn.Sequential(
+                            nn.Linear(512, 1),
+                            nn.Sigmoid())
 
         print("Resnet18 initializing")
 
@@ -84,12 +122,14 @@ def initialize_model(model_name, weight=None):
         if feature_extract:
             for param in model_ft.parameters():
                 param.requires_grad = False 
-        model_ft.fc = nn.Sequential(
-                        nn.Linear(512, 128),
-                        nn.ReLU(),
-                        nn.Dropout(0.3),
-                        nn.Linear(128, 1),
-                        nn.Sigmoid())
+        model_ft.avgpool = nn.Sequential(
+                            nn.BatchNorm2d(num_features=512),
+                            nn.AdaptiveAvgPool2d((1,1)),
+                            )
+
+        model_ft.fc      = nn.Sequential(
+                            nn.Linear(512, 1),
+                            nn.Sigmoid())
 
         print("Resnet34 initializing")
 
@@ -118,11 +158,18 @@ def initialize_model(model_name, weight=None):
         model_ft        = SimpleCNN()
         print("Simple RCNN initializing")
 
+    elif model_name =="tworesnet34":
+        """Two resnet neck"""
+        model_ft        = TwoResnetWay(pretrain=use_pretrained)
+        print("Two Resnet neck")
+
     else:
         print("Invalid model name, exiting...")
 
     if weight == None:
-        model_ft.apply(weights_init)
+        if 'resnet' not in model_name:
+            model_ft.apply(weights_init)
+
     else: 
         model_ft.load_state_dict(torch.load(weight))
         print('Weight being loaded')

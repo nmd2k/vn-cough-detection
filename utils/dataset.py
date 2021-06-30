@@ -51,6 +51,55 @@ class AICoughDataset(Dataset):
         target = float(self.target[index])
 
         return img, target
+
+class Mel_Mfcc_Dataset(Dataset):
+    """
+    Combine Mel and Mfcc Dataset
+    Args:
+        root_path (string): Path to dataset directory
+        is_train (bool): Train dataset or test dataset
+        transform (function): whether to apply the data augmentation scheme
+                mentioned in the paper. Only applied on the train split.
+    """
+
+    def __init__(self, root_path, is_train=True, transform=None):
+        self.path      = root_path
+        self.train     = is_train
+        if transform == None:
+            self.transform = transforms.ToTensor()
+        else:
+            self.transform = transform
+
+        if is_train:
+            csv = pd.read_csv(os.path.join(root_path, 'train', 'metadata.csv'))
+            self.target    = csv['assessment_result']
+        else:
+            csv = pd.read_csv(os.path.join(root_path, 'test', 'metadata.csv'))
+
+        self.ids       = csv['uuid']
+    
+    def __len__(self):
+        return len(self.ids)
+
+    def __getitem__(self, index):
+        id = self.ids[index]
+
+        if not self.train:
+            # testset return id and input
+            mel   = torch.load(os.path.join(self.path, 'test/mel_spectrogram', id + '.pt'))
+            mfcc  = torch.load(os.path.join(self.path, 'test/mfcc_spectrogram', id + '.pt'))
+            mel   = mel.repeat(3, 1, 1)
+            mfcc  = mfcc.repeat(3, 1, 1)
+            return id, mel, mfcc
+        
+        # trainset return input and target
+        mel  = torch.load(os.path.join(self.path, 'train/mel_spectrogram', id + '.pt'))
+        mfcc = torch.load(os.path.join(self.path, 'train/mfcc_spectrogram', id + '.pt'))
+        mel  = mel.repeat(3, 1, 1)
+        mfcc  = mfcc.repeat(3, 1, 1)
+        target = float(self.target[index])
+
+        return mel, mfcc, target
         
 class FixedLenDataset(Dataset):
     def __init__(self, root_path, mfcc=True, is_train=True, transform=None):
