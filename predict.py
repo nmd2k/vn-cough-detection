@@ -1,22 +1,37 @@
 import os
 import torch
+import argparse
 from tqdm import tqdm
 from pandas import DataFrame
 from torch.utils.data import DataLoader
 
-from model.model import Randomize, SimpleCNN
+from model.model import Randomize, SimpleCNN, initialize_model
 from utils.dataset import AICoughDataset
 from utils.data_tools import validate_submission
 from model.config import DATA_PATH, RUN_NAME, SAVE_PATH
 
+def parse_args():
+    """
+    Parse command line arguments
+    """
+    
+    parser = argparse.ArgumentParser(description='COVID-19 Detection through Cough')
+    parser.add_argument('--weight', type=str, default='./model/exp1/weight.pth', help='path to weight')
+    
+    args = parser.parse_args()
+    return args
+
+
 if __name__ == '__main__':
+    args = parse_args()
+    
     # predict on device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # call model + load pretrained weight
-    model = SimpleCNN().to(device)
-    model.load_state_dict(torch.load(os.path.join(SAVE_PATH,RUN_NAME+'.pth')))
+    model = initialize_model(model_name='resnet34').to(device)
+    model.load_state_dict(torch.load(args.weight))
     
     # set layers such as dropout and batchnorm in evaluation mode
     model.eval()

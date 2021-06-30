@@ -140,20 +140,23 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
+    # create dir for save weight
+    epochs = args.epoch
+    save_dir = create_exp_dir()
+
     # define model + optimizer + criterion
     model = initialize_model(args.model, args.weight).to(device)
 
     criterion = nn.BCELoss()
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
+    
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[4,9,14,19], gamma=0.7)
 
     # start training
     run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
     best_acc = 0 # if valid acc bigger than best_acc then save version
-    epochs = args.epoch
-    # create dir for save weight
-    save_dir = create_exp_dir()
     
     for epoch in range(epochs):
         t0 = time.time()
@@ -161,7 +164,7 @@ if __name__ == '__main__':
         t1 = time.time()
         # log train experiment
         wandb.log({'Train loss': train_loss, 'Train accuracy': train_acc}, step=epoch)
-        print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | {(t1-t0):.1f}s')
+        print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | {(t1-t0):.1f}s | lr: {scheduler.get_lr()}' )
         
         t0 = time.time()
         test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
@@ -169,6 +172,8 @@ if __name__ == '__main__':
         # log eval experiment
         wandb.log({'Valid loss': test_loss, 'Valid accuracy': test_acc}, step=epoch)
         print(f'{epoch+1}/{epochs} | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f} | {(t1-t0):.1f}s')
+
+        scheduler.step()
 
     trained_weight = wandb.Artifact(RUN_NAME, type='weights')
     # trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
