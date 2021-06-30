@@ -19,6 +19,7 @@ N_MELS          = 128
 
 # MODEL CONFIG ===========================
 RUN_NAME        = 'cnn'
+MODEL           = 'resnet18'
 INPUT_SIZE      = 640
 BATCH_SIZE      = 16
 NUM_WORKER      = 0

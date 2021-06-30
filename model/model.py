@@ -52,6 +52,7 @@ def initialize_model(model_name, feature_extract, use_pretrained=True):
     # Initialize these variables which will be set in this if statement. Each of these
     #   variables is model specific.
     model_ft = None
+    input_size = 0
 
     if model_name == "resnet18":
         """ Resnet18
@@ -65,9 +66,56 @@ def initialize_model(model_name, feature_extract, use_pretrained=True):
         model_ft.fc = nn.Sequential(
                         nn.Linear(512, 128),
                         nn.ReLU(),
-                        nn.Dropout(0.2),
+                        nn.Dropout(0.3),
                         nn.Linear(128, 1),
-                        nn.LogSoftmax(dim=1))
+                        nn.Sigmoid())
+
+        print("Resnet18 initializing")
+
+    elif model_name == "resnet34":
+        """ Resnet34
+        """
+        model_ft        = models.resnet34(pretrained=use_pretrained)
+        if feature_extract:
+            for param in model_ft.parameters():
+                param.requires_grad = False 
+
+        model_ft.conv1  = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        model_ft.fc = nn.Sequential(
+                        nn.Linear(512, 128),
+                        nn.ReLU(),
+                        nn.Dropout(0.3),
+                        nn.Linear(128, 1),
+                        nn.Sigmoid())
+
+        print("Resnet34 initializing")
+
+    elif model_name == "resnet50":
+        """ Resnet50
+        """
+        model_ft        = models.resnet50(pretrained=use_pretrained)
+        if feature_extract:
+            for param in model_ft.parameters():
+                param.requires_grad = False 
+
+        model_ft.conv1  = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        model_ft.fc = nn.Sequential(
+                        nn.Linear(2048, 1024),
+                        nn.ReLU(),
+                        nn.Dropout(0.3),
+                        nn.Linear(1024, 128),
+                        nn.ReLU(),
+                        nn.Dropout(0.3),
+                        nn.Linear(128, 1),
+                        nn.Sigmoid())
+
+        print("Resnet50 initializing")
+
+    elif model_name == "simplecnn":
+        """Simple CNN
+        """
+        model_ft        = SimpleCNN()
+        print("Simple RCNN initializing")
 
     else:
         print("Invalid model name, exiting...")

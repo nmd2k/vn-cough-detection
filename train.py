@@ -23,7 +23,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='COVID-19 Detection through Cough')
     parser.add_argument('--run', type=str, default=RUN_NAME, help='run name')
     parser.add_argument('--dataset', type=str, default=DATASET, help='dataset name for call W&B api')
-    parser.add_argument('--model', type=str, default=None, help='init model')
+    parser.add_argument('--model', type=str, default=MODEL, help='init model')
     parser.add_argument('--epoch', type=int, default=EPOCH, help='number of epoch')
     parser.add_argument('--size', type=int, default=INPUT_SIZE, help='input size')
     parser.add_argument('--lr', type=float, default=LR, help='learning rate')
@@ -145,8 +145,7 @@ if __name__ == '__main__':
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # define model + optimizer + criterion
-    # model = initialize_model('resnet18', feature_extract=False, use_pretrained=False).to(device) # uncomment to train with resnet18
-    model = SimpleCNN().to(device)
+    model = initialize_model(args.model, feature_extract=True, use_pretrained=True).to(device)
     model.apply(weights_init)
 
     criterion = nn.BCELoss()
