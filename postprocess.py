@@ -1,7 +1,7 @@
 import pandas as pd 
 
-sample_submissions = ".\private_test_sample_submissions.csv"
-output = ".\results.csv"
+sample_submissions =  "./private_test_sample_submissions.csv"
+output = "./results.csv"
 
 sample_df = pd.read_csv(sample_submissions)
 
@@ -9,7 +9,7 @@ df = pd.read_csv(output)
 df['uuid'] = df['uuid'].str[:36]
 
 
-aggregation_functions = {'assessment_result': 'mean'}
+aggregation_functions = {'assessment_result': 'max'}
 df_new = df.groupby(df['uuid']).aggregate(aggregation_functions)
 
 # df_new.info()
