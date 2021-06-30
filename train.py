@@ -12,6 +12,7 @@ from model.config import *
 from utils.dataset import AICoughDataset
 from utils.mlops_tools import use_data_wandb
 from utils.metric import binary_acc
+from model.common import weights_init
 from model.model import Randomize, SimpleCNN, initialize_model
 
 def parse_args():
@@ -118,7 +119,7 @@ if __name__ == '__main__':
         run         = args.run,
         model       = args.model,
         size        = args.size,
-        batch_size  = args.batch_size,
+        batch_size  = args.batch_size,  
         num_worker  = args.num_worker,
 
         lr          = args.lr,
@@ -144,15 +145,16 @@ if __name__ == '__main__':
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # define model + optimizer + criterion
-    # model = initialize_model('resnet', feature_extract=False, use_pretrained=False).to(device)
+    # model = initialize_model('resnet18', feature_extract=False, use_pretrained=False).to(device) # uncomment to train with resnet18
     model = SimpleCNN().to(device)
+    model.apply(weights_init)
 
     criterion = nn.BCELoss()
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9)
 
     # start training
-    # run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
+    run.watch(models=model, criterion=criterion, log='all', log_freq=10) # call wandb to track weight and bias
 
     best_acc = 0 # if valid acc bigger than best_acc then save version
     epochs = args.epoch
