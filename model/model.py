@@ -22,7 +22,7 @@ class SimpleCNN(Module):
         self.dropout    = nn.Dropout(0.2)
         self.maxpool    = nn.MaxPool2d(kernel_size=(2,2))
 
-        self.conv1      = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3)
+        self.conv1      = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3)
         self.conv2      = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3)
         self.conv3      = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
 
@@ -40,7 +40,7 @@ class SimpleCNN(Module):
         out = F.relu(self.conv3(out))
         out = self.maxpool(out)
 
-        out = out.view(-1, 14*14*64)
+        out = out.view(-1, 14*14*128)
         out = F.relu(self.fc1(out))
         out = self.dropout(out)
         out = F.relu(self.fc2(out))
@@ -68,7 +68,6 @@ def initialize_model(model_name, weight=None):
             for param in model_ft.parameters():
                 param.requires_grad = False 
 
-        model_ft.conv1  = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         model_ft.fc = nn.Sequential(
                         nn.Linear(512, 128),
                         nn.ReLU(),
@@ -85,8 +84,6 @@ def initialize_model(model_name, weight=None):
         if feature_extract:
             for param in model_ft.parameters():
                 param.requires_grad = False 
-
-        model_ft.conv1  = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         model_ft.fc = nn.Sequential(
                         nn.Linear(512, 128),
                         nn.ReLU(),
@@ -103,8 +100,6 @@ def initialize_model(model_name, weight=None):
         if feature_extract:
             for param in model_ft.parameters():
                 param.requires_grad = False 
-
-        model_ft.conv1  = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         model_ft.fc = nn.Sequential(
                         nn.Linear(2048, 1024),
                         nn.ReLU(),

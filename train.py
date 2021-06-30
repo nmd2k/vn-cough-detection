@@ -10,7 +10,7 @@ from torch.utils.data.dataset import random_split
 
 from model.config import *
 from utils.dataset import AICoughDataset
-from utils.mlops_tools import use_data_wandb
+from utils.mlops_tools import create_exp_dir, use_data_wandb
 from utils.metric import binary_acc
 from model.common import weights_init
 from model.model import Randomize, SimpleCNN, initialize_model
@@ -104,12 +104,7 @@ def eval(model, device, validloader, loss_function, best_acc):
 
         # export weight
         if accuracy>best_acc:
-            try:
-                # torch.onnx.export(model, input, os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
-                torch.save(model.state_dict(), os.path.join(SAVE_PATH,RUN_NAME+'.pth'))
-            except:
-                print('Can export weights')
-
+            torch.save(model.state_dict(), os.path.join(save_dir,'weight.pth'))
         return total_loss, accuracy
 
 if __name__ == '__main__':
@@ -157,6 +152,8 @@ if __name__ == '__main__':
 
     best_acc = 0 # if valid acc bigger than best_acc then save version
     epochs = args.epoch
+    # create dir for save weight
+    save_dir = create_exp_dir()
     
     for epoch in range(epochs):
         t0 = time.time()
@@ -175,5 +172,5 @@ if __name__ == '__main__':
 
     trained_weight = wandb.Artifact(RUN_NAME, type='weights')
     # trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
-    trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.pth'))
+    trained_weight.add_file(os.path.join(save_dir,'weight.pth'))
     wandb.log_artifact(trained_weight)

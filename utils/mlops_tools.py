@@ -1,4 +1,5 @@
 import os
+import torch
 import wandb
 from model.config import *
 
@@ -47,3 +48,12 @@ def use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, ro
         artifact.download(root_path)
 
     return artifact
+
+def create_exp_dir():
+    for idx in range(1, 1000, 1):
+        if not os.path.exists(os.path.join(SAVE_PATH, f'exp{idx}')):
+            save_dir = os.path.join(SAVE_PATH, f'exp{idx}')
+            break
+    os.makedirs(save_dir)
+
+    return save_dir
