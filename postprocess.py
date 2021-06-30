@@ -1,9 +1,9 @@
 import pandas as pd 
 
-sample = "C:\\Users\\hoang\\Desktop\\vn-cough-detection-main\\private_test_sample_submissions.csv"
-output = "C:\\Users\\hoang\\Desktop\\vn-cough-detection-main\\results.csv"
+sample_submissions = ".\private_test_sample_submissions.csv"
+output = ".\results.csv"
 
-sample_df = pd.read_csv(sample)
+sample_df = pd.read_csv(sample_submissions)
 
 df = pd.read_csv(output)
 df['uuid'] = df['uuid'].str[:36]
