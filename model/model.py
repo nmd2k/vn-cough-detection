@@ -3,6 +3,7 @@ from torch import nn
 from torch.nn import Module
 from torchvision import models
 import torch.nn.functional as F
+from model.common import weights_init
 
 class Randomize(Module):
     def __init__(self):
@@ -48,11 +49,16 @@ class SimpleCNN(Module):
 
         return torch.sigmoid(out)
 
-def initialize_model(model_name, feature_extract, use_pretrained=True):
+def initialize_model(model_name, weight=None):
     # Initialize these variables which will be set in this if statement. Each of these
     #   variables is model specific.
     model_ft = None
-    input_size = 0
+    use_pretrained  = False
+    feature_extract = False
+
+    if weight == None:
+        use_pretrained  = True
+        feature_extract = True
 
     if model_name == "resnet18":
         """ Resnet18
@@ -119,6 +125,11 @@ def initialize_model(model_name, feature_extract, use_pretrained=True):
 
     else:
         print("Invalid model name, exiting...")
-        exit()
 
+    if weight == None:
+        model_ft.apply(weights_init)
+    else: 
+        model_ft.load_state_dict(torch.load(weight))
+        print('Weight being loaded')
+    
     return model_ft

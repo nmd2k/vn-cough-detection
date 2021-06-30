@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument('--run', type=str, default=RUN_NAME, help='run name')
     parser.add_argument('--dataset', type=str, default=DATASET, help='dataset name for call W&B api')
     parser.add_argument('--model', type=str, default=MODEL, help='init model')
+    parser.add_argument('--weight', type=str, default=None, help='path to pretrained weight')
     parser.add_argument('--epoch', type=int, default=EPOCH, help='number of epoch')
     parser.add_argument('--size', type=int, default=INPUT_SIZE, help='input size')
     parser.add_argument('--lr', type=float, default=LR, help='learning rate')
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     valid_size  = int(VALID_RATE*len(train_set))
     train_set, valid_set = random_split(train_set, [len(train_set)-valid_size, valid_size])
 
-    trainloader = DataLoader(train_set, batch_size=args.batch_size, num_workers=args.num_worker)
+    trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_worker)
     validloader = DataLoader(valid_set, batch_size=args.batch_size, num_workers=args.num_worker)
 
     # set device to train on
@@ -145,8 +146,7 @@ if __name__ == '__main__':
     print("Current device", torch.cuda.get_device_name(torch.cuda.current_device()))
 
     # define model + optimizer + criterion
-    model = initialize_model(args.model, feature_extract=True, use_pretrained=True).to(device)
-    model.apply(weights_init)
+    model = initialize_model(args.model, args.weight).to(device)
 
     criterion = nn.BCELoss()
 

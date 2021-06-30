@@ -18,13 +18,13 @@ DURATION        = 8150
 N_MELS          = 128
 
 # MODEL CONFIG ===========================
-RUN_NAME        = 'cnn'
+RUN_NAME        = 'nmd-cnn'
 MODEL           = 'resnet18'
 INPUT_SIZE      = 640
 BATCH_SIZE      = 16
 NUM_WORKER      = 0
 
-EPOCH           = 5
+EPOCH           = 10
 LR              = 5e-4
 
 # PREDICTION CONFIG ======================
