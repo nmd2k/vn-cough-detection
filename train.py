@@ -207,7 +207,7 @@ if __name__ == '__main__':
     
     # load best model
     model.load_state_dict(torch.load(os.path.join(save_dir, 'weight.pth')))
-    auc, pred, target = eval_validset(model, device, valid_set, save_dir)
+    auc, pred, target = eval_validset(model, device, args.model, valid_set, save_dir)
     wandb.run.summary['AUC'] = auc
     
     print(f'\n===========================================\nSUMMARY: Area under the ROC curve = 0.00000 {auc:.5f}')

@@ -223,7 +223,7 @@ def mfcc_spectrogram_generator(sample_rate=SR,
         
         torch.save(spec, os.path.join(root_path, 'mfcc_spectrogram', filename[idx][:-3]+'pt'))
 
-def eval_validset(model, device, valid_set, save_dir):
+def eval_validset(model, device, model_name, valid_set, save_dir):
     """
     Summary on valid set 
 
@@ -238,9 +238,16 @@ def eval_validset(model, device, valid_set, save_dir):
     with torch.no_grad():
         for idx, (input, target) in enumerate(valid_set):
             input = input.unsqueeze(0).to(device)
+
+            if 'tworesnet' in model_name:
+                mel, mfcc = input[0], mfcc[1]
+                
+                # forward
+                predict = model(mel, mfcc)
+
+            else:
+                predict = model(input)
             
-            # forward
-            predict = model(input)
             y_true.append(torch.tensor(target))
             y_pred.append(predict)
 
