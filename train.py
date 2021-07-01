@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import random_split
 
 from model.config import *
-from utils.dataset import AICoughDataset
+from utils.dataset import AICoughDataset, Mel_Mfcc_Dataset
 from utils.mlops_tools import create_exp_dir, use_data_wandb
 from utils.metric import binary_acc, plot_roc_auc
 from model.common import weights_init
@@ -51,13 +51,20 @@ def train(model, device, trainloader, optimizer, loss_function):
     running_loss, total_count, total_acc, auc = 0, 0, 0, 0
     for i, (input, target) in enumerate(trainloader):
         # load data into cuda
-        input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
-
+        input, target   = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+        
         # zero gradient
         optimizer.zero_grad()
 
-        # forward
-        predict = model(input)
+        if 'tworesnet' in args.model:
+            mel, mfcc = input[0], mfcc[1]
+            
+            # forward
+            predict = model(mel, mfcc)
+
+        else:
+            predict = model(input)
+
         loss = loss_function(predict, target)
     
         # back propagation + step
@@ -83,7 +90,7 @@ def eval(model, device, validloader, loss_function, best_acc):
     Args:
         model (function): deep learning model 
         device (string): run on 'cuda' or 'cpu'
-        trainloader (iterator): Iterator for iterate through valid dataset
+        validloader (iterator): Iterator for iterate through valid dataset
         loss_function (function): function for calucate model loss
         best_acc (float): checkpoint for save current model
     """
@@ -91,11 +98,22 @@ def eval(model, device, validloader, loss_function, best_acc):
     running_loss, total_count, total_acc, auc = 0, 0, 0, 0
     with torch.no_grad():
         for i, (input, target) in enumerate(validloader):
-            input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+            # load data into cuda
+            input, target   = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+            
+            # zero gradient
+            optimizer.zero_grad()
 
-            # forward
-            predict = model(input)
-            loss    = loss_function(predict, target)
+            if 'tworesnet' in args.model:
+                mel, mfcc = input[0], mfcc[1]
+                
+                # forward
+                predict = model(mel, mfcc)
+
+            else:
+                predict = model(input)
+
+            loss        = loss_function(predict, target)
 
             # metric
             running_loss    += loss.item()
@@ -134,7 +152,10 @@ if __name__ == '__main__':
     use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
-    train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
+    if 'tworesnet' in args.model:
+        train_set   = Mel_Mfcc_Dataset(root_path=DATA_PATH, is_train=True)
+    else:
+        train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
 
     valid_size  = int(VALID_RATE*len(train_set))
     train_set, valid_set = random_split(train_set, [len(train_set)-valid_size, valid_size])
