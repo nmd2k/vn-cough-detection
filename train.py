@@ -48,15 +48,22 @@ def train(model, device, trainloader, optimizer, loss_function):
     model.train()
 
     running_loss, total_count, total_acc = 0, 0, 0
-    for i, (mel, mfcc, target) in enumerate(trainloader):
+    for i, (input, target) in enumerate(trainloader):
         # load data into cuda
-        mel, mfcc, target = mel.to(device), mfcc.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
-
+        input, target   = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+        
         # zero gradient
         optimizer.zero_grad()
 
-        # forward
-        predict = model(mel, mfcc)
+        if 'tworesnet' in args.model:
+            mel, mfcc = input[0], mfcc[1]
+            
+            # forward
+            predict = model(mel, mfcc)
+
+        else:
+            predict = model(input)
+
         loss = loss_function(predict, target)
     
         # back propagation + step
@@ -80,19 +87,30 @@ def eval(model, device, validloader, loss_function, best_acc):
     Args:
         model (function): deep learning model 
         device (string): run on 'cuda' or 'cpu'
-        trainloader (iterator): Iterator for iterate through valid dataset
+        validloader (iterator): Iterator for iterate through valid dataset
         loss_function (function): function for calucate model loss
         best_acc (float): checkpoint for save current model
     """
     model.eval()
     running_loss, total_count, total_acc = 0,0,0
     with torch.no_grad():
-        for i, (mel, mfcc, target) in enumerate(validloader):
-            mel, mfcc, target = mel.to(device), mfcc.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+        for i, (input, target) in enumerate(validloader):
+            # load data into cuda
+            input, target   = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
+            
+            # zero gradient
+            optimizer.zero_grad()
 
-            # forward
-            predict = model(mel, mfcc)
-            loss    = loss_function(predict, target)
+            if 'tworesnet' in args.model:
+                mel, mfcc = input[0], mfcc[1]
+                
+                # forward
+                predict = model(mel, mfcc)
+
+            else:
+                predict = model(input)
+
+            loss        = loss_function(predict, target)
 
             # metric
             running_loss    += loss.item()
