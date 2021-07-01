@@ -6,7 +6,7 @@ from pandas import DataFrame
 from torch.utils.data import DataLoader
 
 from model.model import Randomize, SimpleCNN, initialize_model
-from utils.dataset import AICoughDataset
+from utils.dataset import AICoughDataset, Mel_Mfcc_Dataset
 from utils.data_tools import validate_submission
 from model.config import DATA_PATH, RUN_NAME, SAVE_PATH
 
@@ -36,8 +36,10 @@ if __name__ == '__main__':
     # set layers such as dropout and batchnorm in evaluation mode
     model.eval()
 
-    # TODO: transform
-    test_set = AICoughDataset(DATA_PATH, is_train=False)
+    if 'tworesnet' in args.model:
+        test_set   = Mel_Mfcc_Dataset(root_path=DATA_PATH, is_train=False)
+    else:
+        test_set   = AICoughDataset(root_path=DATA_PATH, is_train=False)
 
     # iterate though all the data
     pbar = tqdm(range(len(test_set)))

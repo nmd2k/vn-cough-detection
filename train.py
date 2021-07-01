@@ -128,8 +128,10 @@ if __name__ == '__main__':
     use_data_wandb(run, data_name=DATASET, data_ver=DVERSION, data_type=None, root_path=DATA_PATH, download=False)
 
     # load dataset
-    # train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
-    train_set   = Mel_Mfcc_Dataset(root_path=DATA_PATH, is_train=True)
+    if 'tworesnet' in args.model:
+        train_set   = Mel_Mfcc_Dataset(root_path=DATA_PATH, is_train=True)
+    else:
+        train_set   = AICoughDataset(root_path=DATA_PATH, is_train=True)
 
     valid_size  = int(VALID_RATE*len(train_set))
     train_set, valid_set = random_split(train_set, [len(train_set)-valid_size, valid_size])
