@@ -9,6 +9,7 @@ from model.config import *
 from unsilence import Unsilence
 import torchaudio.functional as F
 import torchaudio.transforms as T
+from utils.metric import plot_roc_auc
 
 def validate_submission(sample_file, submission_file):
     """
@@ -221,3 +222,30 @@ def mfcc_spectrogram_generator(sample_rate=SR,
             os.mkdir(os.path.join(root_path, 'mfcc_spectrogram'))
         
         torch.save(spec, os.path.join(root_path, 'mfcc_spectrogram', filename[idx][:-3]+'pt'))
+
+def eval_validset(model, device, valid_set, save_dir):
+    """
+    Summary on valid set 
+
+    Args:
+        model (function): deep learning model 
+        device (string): run on 'cuda' or 'cpu'
+        valid_set (dataset): dataset for evaluation
+    """
+    model.eval()
+    running_loss, total_count, total_acc, auc = 0, 0, 0, 0
+    y_pred, y_true = [], []
+    with torch.no_grad():
+        for idx, (input, target) in enumerate(valid_set):
+            input = input.unsqueeze(0).to(device)
+            
+            # forward
+            predict = model(input)
+            y_true.append(torch.tensor(target))
+            y_pred.append(predict)
+
+        y_true = torch.stack(y_true)
+        y_pred = torch.stack(y_pred).squeeze()
+
+    auc = plot_roc_auc(y_pred=y_pred, y_true=y_true, save_img=True, save_dir=save_dir)
+    return auc, y_pred.data.cpu().numpy(), y_true.data.cpu().numpy()

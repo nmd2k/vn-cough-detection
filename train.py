@@ -11,8 +11,9 @@ from torch.utils.data.dataset import random_split
 from model.config import *
 from utils.dataset import AICoughDataset
 from utils.mlops_tools import create_exp_dir, use_data_wandb
-from utils.metric import binary_acc
+from utils.metric import binary_acc, plot_roc_auc
 from model.common import weights_init
+from utils.data_tools import eval_validset
 from model.model import Randomize, SimpleCNN, initialize_model
 
 def parse_args():
@@ -47,7 +48,7 @@ def train(model, device, trainloader, optimizer, loss_function):
     """
     model.train()
 
-    running_loss, total_count, total_acc = 0, 0, 0
+    running_loss, total_count, total_acc, auc = 0, 0, 0, 0
     for i, (input, target) in enumerate(trainloader):
         # load data into cuda
         input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
@@ -67,11 +68,13 @@ def train(model, device, trainloader, optimizer, loss_function):
         running_loss    += loss.item()
         total_acc       += binary_acc(predict, target)
         total_count     += predict.shape[0]
+        auc             += plot_roc_auc(y_pred=predict, y_true=target, save_dir=save_dir)
 
+    epoch_auc  = auc/len(trainloader)
     total_loss = running_loss/len(trainloader)
     accuracy   = total_acc/total_count
 
-    return total_loss, accuracy
+    return total_loss, accuracy, epoch_auc
 
 def eval(model, device, validloader, loss_function, best_acc):
     """
@@ -85,7 +88,7 @@ def eval(model, device, validloader, loss_function, best_acc):
         best_acc (float): checkpoint for save current model
     """
     model.eval()
-    running_loss, total_count, total_acc = 0,0,0
+    running_loss, total_count, total_acc, auc = 0, 0, 0, 0
     with torch.no_grad():
         for i, (input, target) in enumerate(validloader):
             input, target = input.to(device), target.unsqueeze(1).to(device, dtype=torch.float)
@@ -99,13 +102,16 @@ def eval(model, device, validloader, loss_function, best_acc):
             total_acc       += binary_acc(predict, target)
             total_count     += predict.shape[0]
 
+            auc             += plot_roc_auc(y_pred=predict, y_true=target, save_dir=save_dir)
+
         total_loss = running_loss/len(validloader)
+        epoch_auc  = auc/len(validloader)
         accuracy   = total_acc/total_count
 
         # export weight
         if accuracy>best_acc:
             torch.save(model.state_dict(), os.path.join(save_dir,'weight.pth'))
-        return total_loss, accuracy
+        return total_loss, accuracy, epoch_auc
 
 if __name__ == '__main__':
     args = parse_args()
@@ -160,20 +166,30 @@ if __name__ == '__main__':
     
     for epoch in range(epochs):
         t0 = time.time()
-        train_loss, train_acc = train(model, device, trainloader, optimizer, criterion)
+        train_loss, train_acc, train_auc = train(model, device, trainloader, optimizer, criterion)
         t1 = time.time()
         # log train experiment
         wandb.log({'Train loss': train_loss, 'Train accuracy': train_acc}, step=epoch)
-        print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | {(t1-t0):.1f}s | lr: {scheduler.get_lr()}' )
+        print(f'{epoch+1}/{epochs} | Train loss: {train_loss:.3f} | Train accuracy: {train_acc:.3f} | AUC: {train_auc:.3f} | {(t1-t0):.1f}s')
         
         t0 = time.time()
-        test_loss, test_acc = eval(model, device, validloader, criterion, best_acc)
+        test_loss, test_acc, test_auc = eval(model, device, validloader, criterion, best_acc)
         t1 = time.time()
         # log eval experiment
         wandb.log({'Valid loss': test_loss, 'Valid accuracy': test_acc}, step=epoch)
-        print(f'{epoch+1}/{epochs} | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f} | {(t1-t0):.1f}s')
+        print(f'{epoch+1}/{epochs} | Valid loss: {test_loss:.3f} | Valid accuracy: {test_acc:.3f} | AUC: {test_auc:.3f} | {(t1-t0):.1f}s')
 
+        wandb.log({"lr": scheduler.get_last_lr()[0]}, step=epoch)
+        
+        # decrease lr
         scheduler.step()
+    
+    # load best model
+    model.load_state_dict(torch.load(os.path.join(save_dir, 'weight.pth')))
+    auc, pred, target = eval_validset(model, device, valid_set, save_dir)
+    wandb.run.summary['AUC'] = auc
+    
+    print(f'\n===========================================\nSUMMARY: Area under the ROC curve = 0.00000 {auc:.5f}')
 
     trained_weight = wandb.Artifact(RUN_NAME, type='weights')
     # trained_weight.add_file(os.path.join(SAVE_PATH,RUN_NAME+'.onnx'))
